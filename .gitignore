@@ -2,6 +2,7 @@
 *.env
 *.xml
 *.log
+[Vv]env/
 [Ee]nv/
 [Ee]nvs/
 [Bb]uild/
