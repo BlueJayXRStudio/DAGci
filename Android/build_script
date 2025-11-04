@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 
-source ../envs/paths.env
-source ../envs/secrets.env
+SCRIPT_PATH="$(realpath "$0")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
 
-rm -rf builds
-mkdir builds
+source "$(dirname "$SCRIPT_DIR")/envs/paths.env"
+source "$(dirname "$SCRIPT_DIR")/envs/secrets.env"
+
+rm -rf "$SCRIPT_DIR/builds"
+mkdir "$SCRIPT_DIR/builds"
 
 echo
 echo "Starting Unity build..."
@@ -17,7 +20,7 @@ echo "Starting Unity build..."
   -batchmode -quit \
   -projectPath "$PROJECT_PATH_ANDROID" \
   -executeMethod AndroidBuildCommand.BuildAndroidApp \
-  buildPath="$(pwd)/builds/app.apk" \
+  buildPath="$SCRIPT_DIR/builds/app.apk" \
   KeystoreName="$KeystoreName" \
   KeystorePass="$KeystorePass" \
   KeyaliasName="$KeyaliasName" \

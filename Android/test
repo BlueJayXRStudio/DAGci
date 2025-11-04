@@ -4,23 +4,27 @@
 # or use "bash test"
 # -------------------------------------------------------------------
 
+# Resolve the absolute path of this script
+SCRIPT_PATH="$(realpath "$0")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
+LOGS_DIR="$SCRIPT_DIR/logs"
 # Clean up past test results
 FILES=(
-  "results.xml"
-  "results_edit_mode.xml"
-  "Editor.log"
-  "Editor_edit_mode.log"
-  "logs/results.xml"
-  "logs/results_edit_mode.xml"
-  "logs/Editor.log"
-  "logs/Editor_edit_mode.log"
+  "$SCRIPT_DIR/results.xml"
+  "$SCRIPT_DIR/results_edit_mode.xml"
+  "$SCRIPT_DIR/Editor.log"
+  "$SCRIPT_DIR/Editor_edit_mode.log"
+  "$LOGS_DIR/results.xml"
+  "$LOGS_DIR/results_edit_mode.xml"
+  "$LOGS_DIR/Editor.log"
+  "$LOGS_DIR/Editor_edit_mode.log"
 )
 for f in "${FILES[@]}"; do
   rm -f "$f"
 done
 
 # Exit immediately on error or unset variable
-source ../envs/paths.env
+source "$(dirname "$SCRIPT_DIR")/envs/paths.env"
 set -euo pipefail
 
 # Check that the environment variables are set
@@ -81,8 +85,8 @@ echo "Starting test runners"
   -batchmode \
   -projectPath "$PROJECT_PATH_ANDROID" \
   -runTests -testPlatform PlayMode \
-  -testResults "$(pwd)/logs/results.xml" \
-  -logFile "$(pwd)/logs/Editor.log"
+  -testResults "$LOGS_DIR/results.xml" \
+  -logFile "$LOGS_DIR/Editor.log"
 
 # Capture exit code
 EXIT_CODE=$?
@@ -99,8 +103,8 @@ echo "PlayMode test successful"
   -batchmode \
   -projectPath "$PROJECT_PATH_ANDROID" \
   -runTests -testPlatform EditMode \
-  -testResults "$(pwd)/logs/results_edit_mode.xml" \
-  -logFile "$(pwd)/logs/Editor_edit_mode.log"
+  -testResults "$LOGS_DIR/results_edit_mode.xml" \
+  -logFile "$LOGS_DIR/Editor_edit_mode.log"
 
 # Capture exit code
 EXIT_CODE=$?
@@ -113,10 +117,10 @@ echo
 echo "EditMode test successful"
 
 echo
-if [ -f "results.xml" ]; then
+if [ -f "$LOGS_DIR/results.xml" ]; then
   echo "results.xml created!"
 fi
-if [ -f "results_edit_mode.xml" ]; then
+if [ -f "$LOGS_DIR/results_edit_mode.xml" ]; then
   echo "results_edit_mode.xml created!"
 fi
 

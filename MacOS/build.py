@@ -1,8 +1,9 @@
 import subprocess
-import sys
+import sys, os, _bootstrap
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 result = subprocess.run(
-    ["python", "test.py"],
+    ["python", os.path.join(BASE_DIR, "test.py")],
     # capture_output=True,
     # check=True,
     text=True
@@ -10,7 +11,7 @@ result = subprocess.run(
 
 if result.returncode == 0:
     result = subprocess.run(
-        ["/usr/bin/env", "bash", "build_script"],
+        ["/usr/bin/env", "bash", os.path.join(BASE_DIR, "build_script")],
         # capture_output=True,
         # check=True,
         text=True

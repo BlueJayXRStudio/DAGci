@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 
-source ../envs/paths.env
+SCRIPT_PATH="$(realpath "$0")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
 
-rm -rf builds
-mkdir builds
+source "$(dirname "$SCRIPT_DIR")/envs/paths.env"
+
+rm -rf "$SCRIPT_DIR/builds"
+mkdir "$SCRIPT_DIR/builds"
 
 echo
 echo "Starting Unity build..."
@@ -12,7 +15,7 @@ echo "Starting Unity build..."
   -batchmode -quit \
   -projectPath "$PROJECT_PATH_MACOS" \
   -executeMethod MacOSServerBuildCommand.BuildMacServer \
-  buildPath="$(pwd)/builds/server_app" \
+  buildPath="$SCRIPT_DIR/builds/server_app" \
 
 EXIT_CODE=$?
 
