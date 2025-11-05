@@ -1,0 +1,35 @@
+jobs:
+  pull_macos:
+    run: 
+      - /usr/bin/env bash MacOS/pull_repo
+    needs: []
+
+  test_macos:
+    run: 
+      - python MacOS/test.py
+    needs: [pull_macos]
+
+  build_macos:
+    run:
+      - /usr/bin/env bash MacOS/build_script
+    needs: [test_macos]
+
+  pull_android:
+    run: 
+      - /usr/bin/env bash Android/pull_repo
+    needs: []
+
+  test_android:
+    run:
+      - python Android/test.py
+    needs: [pull_android]
+
+  build_android:
+    run:
+      - /usr/bin/env bash Android/build_script
+    needs: [test_android]
+
+  deploy_android:
+    run:
+      - /usr/bin/env bash Android/adb_deploy_script
+    needs: [build_android]

@@ -44,38 +44,6 @@ fi
 echo "Using Unity from: $UNITY_PATH"
 echo "Project path: $PROJECT_PATH_ANDROID"
 
-# Pull from origin/main
-CURRENT_DIRECTORY="$(pwd)"
-echo
-echo "pulling from origin/main"
-
-echo
-echo "switching from:"
-echo "$CURRENT_DIRECTORY"
-
-cd "$PROJECT_PATH_ANDROID"
-
-echo
-echo "switched to:"
-echo "$(pwd)"
-
-echo
-git restore .
-git pull origin main
-echo
-echo "successfully pulled from origin/main"
-
-echo
-echo "switching back from:"
-echo "$(pwd)"
-
-cd "$CURRENT_DIRECTORY"
-
-echo
-echo "switched back to:"
-echo "$(pwd)"
-
-
 # START PROCEDURES
 echo
 echo "Starting test runners"

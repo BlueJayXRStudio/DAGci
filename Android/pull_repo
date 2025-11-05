@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+# Resolve the absolute path of this script
+SCRIPT_PATH="$(realpath "$0")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
+
+# Exit immediately on error or unset variable
+source "$(dirname "$SCRIPT_DIR")/envs/paths.env"
+set -euo pipefail
+
+# Check that the environment variables are set
+if [ -z "${PROJECT_PATH_ANDROID:-}" ]; then
+  echo "PROJECT_PATH_ANDROID environment variable not set."
+  echo "Example: export PROJECT_PATH_ANDROID='/Users/username/MyUnityProject'"
+  exit 1
+fi
+
+# Optional: Output paths for clarity
+echo "Project path: $PROJECT_PATH_ANDROID"
+
+# Pull from origin/main
+CURRENT_DIRECTORY="$(pwd)"
+echo
+echo "pulling from origin/main"
+
+echo
+echo "switching from:"
+echo "$CURRENT_DIRECTORY"
+
+cd "$PROJECT_PATH_ANDROID"
+
+echo
+echo "switched to:"
+echo "$(pwd)"
+
+echo
+git restore .
+git pull origin main
+echo
+echo "successfully pulled from origin/main"
+
+echo
+echo "switching back from:"
+echo "$(pwd)"
+
+cd "$CURRENT_DIRECTORY"
+
+echo
+echo "switched back to:"
+echo "$(pwd)"
+
+exit 0
