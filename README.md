@@ -2,13 +2,14 @@
 
 > *Tested on Apple Silicon with python 3.13.7*
 
-> Currently working on:
-> - automating version and patch-notes injection.
-> - DAG scheduler
+Fully parallel DAG scheduler implemented here: [`orchestrate_DAG.py`](./Orchestration/orchestrate_DAG.py)
 
-> Documentation for environment setup coming soon. However, this is still a working prototype minus the Android build script on the Unity's side (MacOS server build script is available as a sample template, See [`MacOSServerBuildCommand.cs`](./SampleEditorBuildScripts/MacOSServerBuildCommand.cs)).
+Currently working on:
+- automating version and patch-notes injection.
 
-## Design philosophies:
+Documentation for environment setup coming soon. However, this is still a working prototype minus the Android build script on the Unity's side (MacOS server build script is available as a sample template, See [`MacOSServerBuildCommand.cs`](./SampleEditorBuildScripts/MacOSServerBuildCommand.cs)).
+
+## Design Philosophies:
 
 1. A shell script should have a single responsibility. Whether it’s testing, building, or any other task, a shell script should only do that one thing.
 2. A Python script will serve one of two purposes:
