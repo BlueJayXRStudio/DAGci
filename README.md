@@ -2,7 +2,9 @@
 
 > *Tested on Apple Silicon with python 3.13.7*
 
-Fully parallel DAG scheduler implemented here: [`orchestrate_DAG.py`](./Orchestration/orchestrate_DAG.py)
+Fully parallel DAG scheduler implemented here: [`orchestrate_DAG.py`](./Orchestration/orchestrate_DAG.py) 
+
+The same DAG scheduler with interactive web visualizer with live logging: [`app.py`](./Orchestration/app.py) 
 
 Currently working on:
 - automating version and patch-notes injection.

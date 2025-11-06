@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Pipeline Visualization</title>
+    <script
+      type="text/javascript"
+      src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"
+    ></script>
+    
+    <style type="text/css">
+      
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #a7ff64;
+      }
+
+      #container {
+        display: flex;
+        flex-direction: row;
+        width: 90vw;
+        height: 90vh;
+        border: 1px solid rgb(211, 211, 211);
+        box-shadow: 0 0 30px rgba(77, 77, 77, 0.1);
+        background-color: rgba(255, 255, 255, 0.714);
+        position: relative;
+        overflow: hidden;
+      }
+
+      #mynetwork {
+        flex: 1;
+        position: relative;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      #sidebar {
+        width: 30%;
+        max-width: 350px;
+        border-left: 1px solid #ddd;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 10px;
+        overflow-y: auto;
+      }
+
+      #logbox {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 25%;
+        border-top: 1px solid #ddd;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 10px;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 0.9rem;
+        white-space: pre-wrap;
+        display: none;
+        z-index: 5;
+      }
+
+      .node-spinner {
+        position: absolute;
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+      }
+
+      .loader {
+        border: 3px solid #ccc;
+        border-top: 3px solid #a4dbff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="container">
+      <div id="mynetwork"></div>
+      <div id="logbox">Click a node to view logs...</div>
+    </div>
+
+    <script type="text/javascript">
+      const container = document.getElementById("container");
+      const networkContainer = document.getElementById("mynetwork");
+      const logbox = document.getElementById("logbox");
+
+      const nodes = new vis.DataSet({{ nodes | safe }});
+      const edges = new vis.DataSet({{ edges | safe }});
+      const dynamicOptions = {{ options | safe }};
+
+      var physicsOptions = {
+        physics: {
+          enabled: true,
+          solver: 'barnesHut'
+        }
+      };
+
+      const finalOptions = {
+          ...dynamicOptions,
+          ...physicsOptions
+      };
+      
+      // Use this if you want physics enabled
+      const finalOptionsSafelyMerged = {
+          ...dynamicOptions,
+          physics: {
+              ...(dynamicOptions.physics || {}),
+              ...physicsOptions.physics
+          }
+      };
+
+      const network = new vis.Network(networkContainer, { nodes, edges }, dynamicOptions);
+      // const network = new vis.Network(networkContainer, { nodes, edges }, finalOptionsSafelyMerged);
+      
+      const nodeLogs = {};
+      const spinnerMap = {};
+
+      function createSpinner(nodeId) {
+        const spinner = document.createElement("div");
+        spinner.className = "node-spinner";
+        const loader = document.createElement("div");
+        loader.className = "loader";
+        spinner.appendChild(loader);
+        networkContainer.appendChild(spinner);
+        spinnerMap[nodeId] = { spinner, loader };
+      }
+
+      function removeSpinner(nodeId) {
+        const entry = spinnerMap[nodeId];
+        if (entry) {
+          entry.spinner.remove();
+          delete spinnerMap[nodeId];
+        }
+      }
+
+      function updateSpinnerPositions() {
+        const positions = network.getPositions();
+        const scale = network.getScale();
+
+        for (const [nodeId, entry] of Object.entries(spinnerMap)) {
+          const pos = positions[nodeId];
+          if (!pos) continue;
+
+          const domPos = network.canvasToDOM(pos);
+          const node = nodes.get(nodeId);
+          const nodeSize = node?.size || 25;
+          const spinnerSize = nodeSize * scale * 1.2;
+
+          entry.spinner.style.left = `${domPos.x}px`;
+          entry.spinner.style.top = `${domPos.y}px`;
+          entry.loader.style.width = `${spinnerSize}px`;
+          entry.loader.style.height = `${spinnerSize}px`;
+          entry.loader.style.borderWidth = `${Math.max(2, spinnerSize * 0.12)}px`;
+        }
+      }
+
+      function updateSpinners() {
+        const allNodes = nodes.get();
+        const runningNodes = new Set(
+          allNodes.filter((n) => n.status === "running").map((n) => n.id)
+        );
+        for (const nodeId of runningNodes) {
+          if (!spinnerMap[nodeId]) createSpinner(nodeId);
+        }
+        for (const nodeId of Object.keys(spinnerMap)) {
+          if (!runningNodes.has(nodeId)) removeSpinner(nodeId);
+        }
+        updateSpinnerPositions();
+      }
+
+      network.on("afterDrawing", updateSpinnerPositions);
+      
+      // WebSocket updates
+      const socket = new WebSocket(`ws://${location.host}/ws`);
+      
+      socket.onmessage = function (event) {
+        const message = JSON.parse(event.data);
+        
+        switch (message.type) {
+            case 'GRAPH_UPDATE':
+                const graphData = message.data;
+                
+                graphData.nodes.forEach((updated) => nodes.update(updated));
+                updateSpinners();
+
+                console.log(graphData)
+                break;
+            case 'LOG_MESSAGE':
+              const log_payload = message.data;
+              const nodeId = log_payload.node;
+              const logMessage = log_payload.message;
+              
+              // Ensure the array exists, then append the new message
+              if (!nodeLogs[nodeId]) {
+                  nodeLogs[nodeId] = [];
+              }
+              nodeLogs[nodeId].push(logMessage);
+
+              // If the user is currently viewing this node, append the message to the display
+              if (currentLogNodeId === nodeId) {
+                  // Append the new message followed by a newline
+                  logbox.textContent += '\n' + logMessage; 
+                  // Auto-scroll to show the latest message
+                  logbox.scrollTop = logbox.scrollHeight; 
+              }
+              break;
+                
+            default:
+                console.warn('Received message with unknown type:', message.type);
+                break;
+        }
+      };
+
+      async function fetchNodeLog(nodeId) {
+          try {
+              const response = await fetch(`/logs/${nodeId}`);
+              if (!response.ok) throw new Error("Failed to fetch logs");
+              const logText = await response.text();
+              let logLines = logText.split('\n');
+              if (logLines.length > 0 && logLines[logLines.length - 1] === '') {
+                  logLines.pop();
+              }
+              nodeLogs[nodeId] = logLines;
+              return logLines;
+          } catch (err) {
+              nodeLogs[nodeId] = [];
+              return [];
+          }
+      }
+
+      function displayLogs(nodeId) {
+        const logs = nodeLogs[nodeId] || [];
+        logbox.textContent = logs.length > 0 ? logs.join('\n') : "(No logs available)";
+        // Ensure the box scrolls to the bottom for the latest message
+        logbox.scrollTop = logbox.scrollHeight;
+      }
+
+      let currentLogNodeId = null; // Track which node's logs are displayed
+
+      network.on("click", async function (params) {
+          if (params.nodes.length === 0) {
+              logbox.style.display = "none";
+              currentLogNodeId = null;
+              return;
+          }
+          const nodeId = params.nodes[0];
+          // Set the current node ID
+          currentLogNodeId = nodeId;
+          logbox.style.display = "block";
+          logbox.textContent = `Fetching logs for node ${nodeId}...`;
+          // Fetch and store the history
+          await fetchNodeLog(nodeId); 
+          // Display the stored history
+          displayLogs(nodeId); 
+      });
+      // Initialize
+      updateSpinners();
+    </script>
+  </body>
+</html>

@@ -12,5 +12,5 @@ while True:
     if next == current:
         sys.exit(1)
     current = next
-sys.path = [p for p in sys.path if "/venv" in p or os.path.commonpath([project_root, p]) != project_root]
+sys.path = [p for p in sys.path if "/venv" in p or os.path.commonpath([project_root, os.path.abspath(p)]) != project_root]
 sys.path.append(project_root)

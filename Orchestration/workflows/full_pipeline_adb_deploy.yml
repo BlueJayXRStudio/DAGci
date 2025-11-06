@@ -1,4 +1,19 @@
 jobs:
+  random_job_1:
+    run: 
+      - /usr/bin/env bash Orchestration/random_job
+    needs: []
+  
+  random_job_2:
+    run: 
+      - /usr/bin/env bash Orchestration/random_job
+    needs: [random_job_1]
+  
+  random_job_3:
+    run: 
+      - /usr/bin/env bash Orchestration/random_job
+    needs: [random_job_2]
+
   pull_macos:
     run: 
       - /usr/bin/env bash MacOS/pull_repo
@@ -27,7 +42,7 @@ jobs:
   build_android:
     run:
       - /usr/bin/env bash Android/build_script
-    needs: [test_android]
+    needs: [test_android, build_macos]
 
   deploy_android:
     run:
