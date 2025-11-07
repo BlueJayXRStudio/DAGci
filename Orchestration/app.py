@@ -41,6 +41,13 @@ if not no_cycles:
 ### FOR PYVIS ###
 TEMPLATE_DIR = base_resolver.resolved("templates")
 templates = Jinja2Templates(directory=TEMPLATE_DIR)
+'''
+NODES: list[str]
+EDGES: list[list[str]] # 2-tuple
+LEVELS: dict[str, int]
+STATUS: dict[str, str]
+LOGS: dict[str, list[str]]
+'''
 NODES, EDGES = dag_creator.get_pyvis_objects()
 LEVELS = dag_creator.get_levels()
 STATUS = { node : 'queued' for node in list(in_degree_reversed.keys()) } 

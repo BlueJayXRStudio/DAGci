@@ -16,15 +16,15 @@ class DAGCreator:
     def get_DAG_reversed(self):
         return self.graph_reversed, self.in_degree_reversed
 
-    def get_pyvis_objects(self):
+    def get_pyvis_objects(self) -> tuple[list[str], list[list[str]]]:
         NODES = list(self.in_degree_reversed.keys())
         EDGES = []
         for dependency in list(self.graph_reversed.keys()):
             for dependent in self.graph_reversed[dependency]:
-                EDGES.append((dependency, dependent))
+                EDGES.append([dependency, dependent])
         return NODES, EDGES
 
-    def get_levels(self):
+    def get_levels(self) -> dict[str, int]:
         ### Figure out stages/levels for prettier graph visualization   ###
         # This has no bearing on the actual runtime algorithm, which      #
         # is dynamic and parallel. Will factor em out in the near future. #
