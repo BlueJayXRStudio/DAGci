@@ -1,0 +1,13 @@
+for i in {1..30}
+do
+  rand_float=$(awk -v r="$RANDOM" 'BEGIN { printf "%.4f", r/32767 }')
+  # with 16 workers and 30 tasks each, 0.99895833 chance of success per tasks should yield 0.5 expected pipeline success per run 
+  if awk -v x="$rand_float" 'BEGIN { exit !(x > 0.99895833) }'; then
+    echo "Unexpected failure. Exiting!"
+    exit 1
+  fi
+  sleep $(echo "0.05 * $((RANDOM % 10))" | bc)
+  echo "Finished task $i. Random Result: $((RANDOM % 10))"
+done
+echo "All done!"
+exit 0

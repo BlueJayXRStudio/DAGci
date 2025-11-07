@@ -5,3 +5,4 @@ pyvis
 uvicorn
 fastapi
 websockets
+requests

@@ -1,6 +1,6 @@
 # Unity CICD
 
-> *Tested on Apple Silicon with python 3.13.7*
+> *Tested on Apple Silicon with python 3.13.9 (brew installed)*
 
 Fully parallel DAG scheduler implemented here: [`orchestrate_DAG.py`](./Orchestration/orchestrate_DAG.py) 
 

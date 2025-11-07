@@ -1,6 +1,6 @@
 from collections import defaultdict, deque
 
-class CheckCycles:
+class CycleChecker:
     def __init__(self, in_degree: dict, graph: defaultdict):
         self.in_degree = in_degree
         self.graph = graph

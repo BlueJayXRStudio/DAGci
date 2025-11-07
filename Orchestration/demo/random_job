@@ -1,0 +1,7 @@
+for i in {1..30}
+do
+  sleep $(echo "0.05 * $((RANDOM % 10))" | bc)
+  echo "Finished task $i. Random Result: $((RANDOM % 10))"
+done
+echo "All done!"
+exit 0
