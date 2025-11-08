@@ -14,3 +14,6 @@ while True:
     current = next
 sys.path = [p for p in sys.path if "/venv" in p or os.path.commonpath([project_root, os.path.abspath(p)]) != project_root]
 sys.path.append(project_root)
+
+from Tools.path_tools import PathResolveNormalizer
+project_resolver = PathResolveNormalizer(project_root)

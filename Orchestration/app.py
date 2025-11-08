@@ -294,6 +294,7 @@ async def start_workflow():
 
 async def open_browser():
     url = "http://0.0.0.0:8100"
+    # url = "http://localhost:8100"
     webbrowser.open(url)
 
 @app.on_event("startup")
@@ -310,6 +311,6 @@ if __name__ == "__main__":
     # Don't run as main if running for production, I hope you know that.
     # Use Uvicorn or Gunicorn...
     
-    # uvicorn.run(app, host="0.0.0.0", port=8100, reload=False) # for local network access, bind to all interfaces
-    uvicorn.run(app, host="0.0.0.0", port=8100, reload=False) 
+    uvicorn.run(app, host="0.0.0.0", port=8100, reload=False) # for local network access, bind to all interfaces
+    # uvicorn.run(app, host="localhost", port=8100, reload=False) 
 
