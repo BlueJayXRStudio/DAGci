@@ -15,6 +15,7 @@ from Tools.logging.run_logger import RunLogger
 import webbrowser
 from collections import defaultdict, deque
 import sqlite3, json
+from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 base_resolver = PathResolveNormalizer(BASE_DIR)
@@ -42,8 +43,8 @@ if not no_cycles:
 ### FOR RUN LOGGING ###
 run_logger = RunLogger(base_resolver.resolved("db/runs.sqlite"), base_resolver.resolved("blobs"))
 run_logger.init_db_blob()
-run_logger.save()
-quit()
+run_logger.created_at = datetime.now().isoformat()
+run_logger.workflow = config_getter.workflow
 
 ### FOR PYVIS ###
 TEMPLATE_DIR = base_resolver.resolved("templates")
@@ -128,11 +129,13 @@ async def return_logs(log_name: str, request: Request):
 
 success = 0
 async def push_update_to_clients():
+    global success
     while True:
         node, status = await message_queue.get()
         success += int(status == "success")
-        if success == len(NODES):
+        if success == len(NODES) or status == "failure":
             # record run
+            run_logger.completed_at = datetime.now().isoformat()
             run_logger.graph_data = {
                 "NODES": NODES,
                 "EDGES": EDGES,
@@ -140,9 +143,11 @@ async def push_update_to_clients():
                 "STATUS": STATUS,
                 "LOGS": LOGS
             }
-        if status == "failure":
-            # record run
-            pass
+            if success == len(NODES):
+                run_logger.status = "success"
+            if status == "failure":
+                run_logger.status = "failure"
+            run_logger.save()
 
         STATUS[node] = status
         node_data, edge_data = build_graph()
@@ -186,6 +191,7 @@ async def push_log_update_to_clients():
 
 async def start_workflow():
     ### RUN JOBS AND WORKERS ###
+    run_logger.started_at = datetime.now().isoformat()
     MAX_PARALLEL_JOBS = 5
 
     queue = deque()
