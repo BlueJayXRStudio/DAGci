@@ -11,6 +11,7 @@ c.execute(
 f"""
     SELECT
         status,
+        created_at,
         uuid,
         time((julianday(completed_at) - julianday(created_at)) * 86400, 'unixepoch') AS duration_hms
     FROM runs

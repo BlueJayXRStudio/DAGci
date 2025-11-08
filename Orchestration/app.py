@@ -115,7 +115,8 @@ async def render_graph(request: Request):
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     SOCKETS.add(websocket)
-    
+    await send_status_update_to_client(websocket)
+
     try:
         while True:
             await websocket.receive_text()
@@ -127,68 +128,65 @@ async def return_logs(log_name: str, request: Request):
     content = "".join(LOGS[f"{log_name}"])
     return Response(content, media_type="text/plain")
 
-success = 0
 async def push_update_to_clients():
-    global success
     while True:
         node, status = await message_queue.get()
-        STATUS[node] = status
+        await send_status_update(node, status)
 
-        success += int(status == "success")
-        if success == len(NODES) or status == "failure":
-            # record run
-            run_logger.completed_at = datetime.now().isoformat()
-            run_logger.graph_data = {
-                "NODES": NODES,
-                "EDGES": EDGES,
-                "LEVELS": LEVELS,
-                "STATUS": STATUS,
-                "LOGS": LOGS
-            }
-            if success == len(NODES):
-                run_logger.status = "success"
-            if status == "failure":
-                run_logger.status = "failure"
-            run_logger.save()
+async def send_status_update(node, status):      
+    STATUS[node] = status
+    node_data, edge_data = build_graph()
 
-        node_data, edge_data = build_graph()
-
-        payload = {
-            "type": "GRAPH_UPDATE",
-            "data": {
-                "nodes": node_data,
-                "edges": edge_data
-            }
+    payload = {
+        "type": "GRAPH_UPDATE",
+        "data": {
+            "nodes": node_data,
+            "edges": edge_data
         }
-        dead = []
-        for ws in SOCKETS:
-            try:
-                await ws.send_json(payload) 
-            except Exception:
-                dead.append(ws)
-        for ws in dead:
-            SOCKETS.remove(ws)
+    }
+    dead = []
+    for ws in SOCKETS:
+        try:
+            await ws.send_json(payload) 
+        except Exception:
+            dead.append(ws)
+    for ws in dead:
+        SOCKETS.remove(ws)
 
+async def send_status_update_to_client(ws):
+    ''' Don't use this while looping SOCKETS. Use as standalone. '''
+    node_data, edge_data = build_graph()
+    payload = {
+        "type": "GRAPH_UPDATE",
+        "data": {
+            "nodes": node_data,
+            "edges": edge_data
+        }
+    }
+    try:
+        await ws.send_json(payload) 
+    except Exception:
+        SOCKETS.remove(ws)
+    
 async def push_log_update_to_clients():
     while True:
         node, log_message = await message_queue_log.get()
-        LOGS[node].append(log_message)
-        
-        payload = {
-            "type": "LOG_MESSAGE",
-            "data": {
-                "node": node,
-                "message": log_message
-                }
-        }
-        dead = []
-        for ws in SOCKETS:
-            try:
-                await ws.send_json(payload)
-            except Exception:
-                dead.append(ws)
-        for ws in dead:
-            SOCKETS.remove(ws)
+        await send_log_message(node, log_message)
+
+async def send_log_message(node, log_message):
+    LOGS[node].append(log_message)
+    payload = {
+        "type": "LOG_MESSAGE",
+        "data": {"node": node, "message": log_message}
+    }
+    dead = []
+    for ws in SOCKETS:
+        try:
+            await ws.send_json(payload)
+        except Exception:
+            dead.append(ws)
+    for ws in dead:
+        SOCKETS.remove(ws)
 
 async def start_workflow():
     ### RUN JOBS AND WORKERS ###
@@ -289,13 +287,41 @@ async def start_workflow():
                     cond.notify_all()
                     return
 
-    threads = [threading.Thread(target=worker, daemon=True) for _ in range(MAX_PARALLEL_JOBS)]
-    for t in threads: t.start()
-    # for t in threads: t.join() # If this were NOT a web app, you'd ideally join before terminating.
+    # threads = [threading.Thread(target=worker, daemon=True) for _ in range(MAX_PARALLEL_JOBS)]
+    # for t in threads: t.start()
+    # # for t in threads: t.join() # If this were NOT a web app, you'd ideally join before terminating.
+    tasks = []
+    for _ in range(MAX_PARALLEL_JOBS):
+        tasks.append(asyncio.to_thread(worker))  # runs in background thread
+    await asyncio.gather(*tasks)
 
+    while not message_queue.empty():
+        node, status = message_queue.get_nowait()
+        await send_status_update(node, status)
+
+    while not message_queue_log.empty():
+        node, log_message = message_queue_log.get_nowait()
+        await send_log_message(node, log_message)
+
+    # record run
+    run_logger.completed_at = datetime.now().isoformat()
+    run_logger.graph_data = {
+        "NODES": NODES,
+        "EDGES": EDGES,
+        "LEVELS": LEVELS,
+        "STATUS": STATUS,
+        "LOGS": LOGS
+    }
+    if not _stop:
+        run_logger.status = "success"
+    else:
+        run_logger.status = "failure"
+    run_logger.save()
+    print("Run Successfully Saved")
+    
 async def open_browser():
-    url = "http://0.0.0.0:8100"
-    # url = "http://localhost:8100"
+    # url = "http://0.0.0.0:8100"
+    url = "http://localhost:8100"
     webbrowser.open(url)
 
 @app.on_event("startup")
@@ -312,6 +338,6 @@ if __name__ == "__main__":
     # Don't run as main if running for production, I hope you know that.
     # Use Uvicorn or Gunicorn...
     
-    uvicorn.run(app, host="0.0.0.0", port=8100, reload=False) # for local network access, bind to all interfaces
-    # uvicorn.run(app, host="localhost", port=8100, reload=False) 
+    # uvicorn.run(app, host="0.0.0.0", port=8100, reload=False) # for local network access, bind to all interfaces
+    uvicorn.run(app, host="localhost", port=8100, reload=False) 
 
