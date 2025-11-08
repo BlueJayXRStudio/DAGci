@@ -132,6 +132,8 @@ async def push_update_to_clients():
     global success
     while True:
         node, status = await message_queue.get()
+        STATUS[node] = status
+
         success += int(status == "success")
         if success == len(NODES) or status == "failure":
             # record run
@@ -149,7 +151,6 @@ async def push_update_to_clients():
                 run_logger.status = "failure"
             run_logger.save()
 
-        STATUS[node] = status
         node_data, edge_data = build_graph()
 
         payload = {

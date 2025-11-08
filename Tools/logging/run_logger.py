@@ -77,6 +77,9 @@ class RunLogger:
         conn.commit()
         conn.close()
         
-    def load(self):
-        pass
+    def load(self, uuid):
+        self.uuid = uuid
+        blob_path = os.path.join(self.blob_dir, f"{uuid}.json")
+        with open(blob_path, "r") as f:
+            self.graph_data = json.load(f)
 
