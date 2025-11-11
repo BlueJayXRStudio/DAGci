@@ -1,4 +1,4 @@
-# ~~Unity~~ General CICD
+# General CICD
 *Originally a lightweight Unity CI pipeline, turned into a general purpose DAG orchestration framework.*
 
 > *Tested on Apple Silicon with python 3.13.9 (brew installed)*
