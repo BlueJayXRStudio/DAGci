@@ -36,6 +36,7 @@ __pycache__/
 [Bb]lobs/
 
 # Ignore misc.
+[Pp]atch[Nn]otes/
 [Pp]latformTools/
 [Ss]ketches/
 

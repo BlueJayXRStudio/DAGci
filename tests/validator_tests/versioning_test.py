@@ -1,4 +1,3 @@
-import _bootstrap
 import pytest
 from Validation.VersionValidation.version_validation import simple_semver_validator
 
