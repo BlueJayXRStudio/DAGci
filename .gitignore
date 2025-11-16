@@ -40,6 +40,9 @@ store_deployment_data/
 [Pp]latformTools/
 [Ss]ketches/
 
+# Misc credentials
+**/gcp.env
+**/gcp.json
 
 ########################################################################
 # DON'T PUT ANYTHING ELSE BELOW HERE
